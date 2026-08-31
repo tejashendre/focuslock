@@ -14,8 +14,8 @@
 (() => {
   // Injection is idempotent: background.js re-injects on every navigation
   // and every 30s tick, and both land in this same isolated world.
-  if (window.__EXAMLOCK_HUD__) return;
-  window.__EXAMLOCK_HUD__ = true;
+  if (window.__FOCUSLOCK_HUD__) return;
+  window.__FOCUSLOCK_HUD__ = true;
 
   const HOST_ID = 'focuslock-hud-host';
 
@@ -172,9 +172,9 @@
   chrome.runtime.onMessage.addListener((msg) => {
     if (!msg) return;
 
-    if (msg.type === 'EXAMLOCK_REMOVE') { teardown(); return; }
+    if (msg.type === 'FOCUSLOCK_REMOVE') { teardown(); return; }
 
-    if (msg.type === 'EXAMLOCK_SYNC') {
+    if (msg.type === 'FOCUSLOCK_SYNC') {
       // The HUD belongs to FOCUS only. Break, hold and idle all use the
       // side panel, where there is room for the log.
       if (msg.phase !== 'FOCUS') { teardown(); return; }

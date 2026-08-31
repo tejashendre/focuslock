@@ -167,7 +167,7 @@ async function pushOverlay(state) {
   if (state.lockedTabId == null) return;
   const prefs = await getPrefs();
   await safe(() => chrome.tabs.sendMessage(state.lockedTabId, {
-    type: 'EXAMLOCK_SYNC',
+    type: 'FOCUSLOCK_SYNC',
     phase: state.phase,
     endTime: state.endTime,
     taskLabel: state.taskLabel,
@@ -178,7 +178,7 @@ async function pushOverlay(state) {
 
 async function hideOverlay(state) {
   if (!state || state.lockedTabId == null) return;
-  await safe(() => chrome.tabs.sendMessage(state.lockedTabId, { type: 'EXAMLOCK_REMOVE' }));
+  await safe(() => chrome.tabs.sendMessage(state.lockedTabId, { type: 'FOCUSLOCK_REMOVE' }));
 }
 
 /* ------------------------------ Session log --------------------------- */
