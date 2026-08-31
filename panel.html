@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FocusLock</title>
+  <style>
+    /* Deliberately flat + dark. This is a control panel, not somewhere
+       to linger — no animation, no colour noise, nothing to look at. */
+    :root {
+      --bg:     #070b14;
+      --panel:  #111a2b;
+      --line:   #1f2b40;
+      --text:   #e8eef8;
+      --muted:  #7d8ca6;
+      --dim:    #4b5c76;
+      --accent: #38bdf8;
+      --red:    #dc2626;
+      --green:  #16a34a;
+      --amber:  #d97706;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-width: 260px;
+      padding: 14px 14px 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+      font-size: 13px;
+    }
+
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .cycle { font-size: 10px; color: var(--dim); letter-spacing: .5px; }
+
+    /* ---- status card ---- */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 13px 12px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .phase {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .phase.focus { color: #f87171; }
+    .phase.break { color: #4ade80; }
+    .phase.hold  { color: #fbbf24; }
+
+    .timer {
+      font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      font-size: 36px;
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: 1px;
+      margin: 5px 0 3px;
+      font-variant-numeric: tabular-nums;
+    }
+    .timer.flat { color: #33415c; }
+
+    .meta { font-size: 11px; color: var(--muted); line-height: 1.45; word-break: break-word; }
+    .task-name { color: var(--text); font-weight: 600; }
+
+    /* ---- form + buttons ---- */
+    label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 9px 10px;
+      margin-bottom: 10px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12.5px;
+      outline: none;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]::placeholder { color: #465873; }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 11px 10px;
+      margin-bottom: 7px;
+      border: 0;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .6px;
+      color: #fff;
+      cursor: pointer;
+    }
+    .btn-lock   { background: var(--red); }
+    .btn-lock:hover   { background: #b91c1c; }
+    .btn-done   { background: var(--green); }
+    .btn-done:hover   { background: #15803d; }
+    .btn-hold   { background: #1f2b40; color: #cbd5e1; }
+    .btn-hold:hover   { background: #2b3a55; }
+    .btn-resume { background: var(--amber); }
+    .btn-resume:hover { background: #b45309; }
+
+    .cancel {
+      width: 100%;
+      margin-top: 2px;
+      padding: 4px;
+      background: none;
+      color: var(--dim);
+      font-size: 10.5px;
+      font-weight: 400;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .cancel:hover { color: var(--muted); }
+
+    .hint {
+      margin-top: 9px;
+      font-size: 10px;
+      line-height: 1.5;
+      color: #3f4f68;
+      text-align: center;
+    }
+
+    /* ---- overlay side toggle ---- */
+    .side-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .seg { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+    .seg button {
+      width: auto;
+      margin: 0;
+      padding: 5px 11px;
+      border-radius: 0;
+      background: var(--panel);
+      color: var(--dim);
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+    .seg button.on { background: #24324a; color: var(--text); }
+
+    /* ---- session log ---- */
+    .log-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin: 20px 0 8px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+    h2 {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .clear {
+      width: auto; margin: 0; padding: 0;
+      background: none; color: var(--dim);
+      font-size: 10px; font-weight: 400; text-decoration: underline;
+    }
+    .clear:hover { color: var(--muted); }
+
+    .today {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 11px;
+      margin-bottom: 9px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .today b { color: var(--text); font-size: 13px; }
+
+    .entry {
+      border-bottom: 1px solid #162033;
+      padding: 8px 2px;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .entry:last-child { border-bottom: 0; }
+    .entry .t { color: var(--text); font-weight: 600; word-break: break-word; }
+    .entry .d { color: var(--dim); font-size: 10px; margin-top: 2px; }
+    .chip {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      vertical-align: 1px;
+    }
+    .chip.FINISHED  { background: #14532d; color: #86efac; }
+    .chip.CANCELLED { background: #422006; color: #fcd34d; }
+    .chip.ABANDONED { background: #3f1d1d; color: #fca5a5; }
+
+    .empty { color: var(--dim); font-size: 11px; padding: 6px 2px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>FocusLock</h1>
+    <span class="cycle">25 / 5</span>
+  </header>
+
+  <!-- Live status -->
+  <div class="card">
+    <div id="phase" class="phase">Idle</div>
+    <div id="timer" class="timer flat">--:--</div>
+    <div id="meta" class="meta">Nothing locked. Pick one tab and commit.</div>
+  </div>
+
+  <!-- IDLE -->
+  <div id="idleView">
+    <label for="taskInput">The one task</label>
+    <input id="taskInput" type="text" maxlength="80"
+           placeholder="e.g. Finish DataCamp module 4" autocomplete="off">
+    <button id="lockBtn" class="btn-lock">LOCK IN &middot; 25M FULLSCREEN</button>
+    <p class="hint">
+      This tab becomes the only tab. New tabs are killed,<br>
+      tab switching snaps back, the window stays fullscreen.
+    </p>
+  </div>
+
+  <!-- FOCUS or BREAK -->
+  <div id="runningView" class="hidden">
+    <button id="doneBtn" class="btn-done">TASK FINISHED &middot; UNLOCK</button>
+    <button id="holdBtn" class="btn-hold">HOLD &middot; PARK FOR LATER</button>
+    <button id="cancelBtn" class="cancel">Emergency cancel</button>
+    <p class="hint">The 25/5 loop repeats until you finish or hold.</p>
+  </div>
+
+  <!-- HOLD -->
+  <div id="holdView" class="hidden">
+    <button id="resumeBtn" class="btn-resume">RESUME &middot; LOCK BACK IN</button>
+    <button id="doneBtn2" class="btn-done">TASK FINISHED &middot; UNLOCK</button>
+    <button id="cancelBtn2" class="cancel">Discard this session</button>
+    <p class="hint">Nothing is running. Your tab is still claimed.</p>
+  </div>
+
+  <!-- Overlay side preference -->
+  <div class="side-row">
+    <span>Timer side</span>
+    <span class="seg">
+      <button id="sideLeft">Left</button>
+      <button id="sideRight">Right</button>
+    </span>
+  </div>
+
+  <!-- Session log -->
+  <div class="log-head">
+    <h2>Session log</h2>
+    <button id="clearLog" class="clear">clear</button>
+  </div>
+  <div id="today" class="today">No sprints logged today.</div>
+  <div id="logList"><p class="empty">Nothing logged yet.</p></div>
+
+  <script src="panel.js"></script>
+</body>
+</html>
