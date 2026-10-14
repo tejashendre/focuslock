@@ -4,13 +4,9 @@
 
 FocusLock puts the browser into enforced fullscreen on a single tab for a focus interval. Zero dependencies, zero network calls, zero escape hatches.
 
-<p align="center">
-  <a href="media/focuslock-demo.mp4">
-    <img src="media/focuslock-demo.gif" alt="FocusLock demo: enforced single-tab focus with timer HUD" width="100%">
-  </a>
-</p>
+https://github.com/user-attachments/assets/8529740e-5e28-417f-8079-7621848b961e
 
-<sub>24 second loop, silent, plays inline on GitHub. Spatial motion product demo showing enforced single-tab fullscreen focus, timer countdown HUD, and lock states (IDLE, FOCUS, HOLD). For the full version with audio, open [media/focuslock-demo.mp4](media/focuslock-demo.mp4). Audio: original local score with synthesized tactile accents.</sub>
+<sub>24 seconds, with sound. Spatial motion product demo showing enforced single-tab fullscreen focus, timer countdown HUD, and lock states (IDLE, FOCUS, HOLD). If the player does not load, the same file is in [media/focuslock-demo.mp4](media/focuslock-demo.mp4). Audio: original local score with synthesized tactile accents.</sub>
 
 **Demo video:** above | **Repository:** you are here | **Author:** [Tejas Hendre](https://www.tejashendre.com/)
 
