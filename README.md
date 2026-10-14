@@ -8,6 +8,15 @@ https://github.com/user-attachments/assets/8529740e-5e28-417f-8079-7621848b961e
 
 <sub>24 seconds, with sound. Spatial motion product demo showing enforced single-tab fullscreen focus, timer countdown HUD, and lock states (IDLE, FOCUS, HOLD). If the player does not load, the same file is in [media/focuslock-demo.mp4](media/focuslock-demo.mp4). Audio: original local score with synthesized tactile accents.</sub>
 
+<details>
+<summary><b>On a phone?</b> Watch the vertical cut (24 seconds)</summary>
+
+https://github.com/user-attachments/assets/63f423b1-f21d-4dee-be68-b79ba36eb76d
+
+<sub>Same film recomposed for 9:16. File: [media/focuslock-demo-9x16.mp4](media/focuslock-demo-9x16.mp4).</sub>
+
+</details>
+
 **Demo video:** above | **Repository:** you are here | **Author:** [Tejas Hendre](https://www.tejashendre.com/)
 
 ---
