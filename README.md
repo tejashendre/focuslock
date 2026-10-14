@@ -1,10 +1,18 @@
-﻿# FocusLock
+# FocusLock
 
 > **A Chrome extension that makes tab-switching physically impossible for 25 minutes at a time. Not a timer. Not a reminder. A lock.**
 
 FocusLock puts the browser into enforced fullscreen on a single tab for a focus interval. Zero dependencies, zero network calls, zero escape hatches.
 
-**Demo video:** _coming shortly_ | **Repository:** you are here | **Author:** [Tejas Hendre](https://www.tejashendre.com/)
+<p align="center">
+  <video src="media/focuslock-demo.mp4" poster="media/focuslock-demo-poster.png" controls width="100%">
+    <a href="media/focuslock-demo.mp4"><img src="media/focuslock-demo-poster.png" alt="FocusLock Demo Video" width="100%"></a>
+  </video>
+</p>
+
+<sub>24 seconds, with sound. Spatial motion product demo showing enforced single-tab fullscreen focus, timer countdown HUD, and lock states (IDLE, FOCUS, HOLD). If the player does not load, the same file is in [media/focuslock-demo.mp4](media/focuslock-demo.mp4). Audio: original local score with synthesized tactile accents.</sub>
+
+**Demo video:** above | **Repository:** you are here | **Author:** [Tejas Hendre](https://www.tejashendre.com/)
 
 ---
 
@@ -22,7 +30,7 @@ Every tool I tried treated this as a motivation problem. Pomodoro timers count d
 
 The design decision that matters: **the loop continues by default.** Most Pomodoro tools stop after one interval and require you to restart, which reintroduces the decision point the tool exists to remove.
 
-`mermaid
+```mermaid
 stateDiagram-v2
     [*] --> IDLE
     
@@ -35,10 +43,10 @@ stateDiagram-v2
     FOCUS --> IDLE : Mark Task Done
     BREAK --> IDLE : Mark Task Done
     HOLD --> IDLE : Cancel Session
-`
+```
 
 ### Technical Workflow
-`mermaid
+```mermaid
 graph LR
     A[Side Panel UI] -->|Commands| B(Background Service Worker)
     B -->|Persists State| C[(chrome.storage.local)]
@@ -50,7 +58,7 @@ graph LR
     
     style B fill:#f9f,stroke:#333,stroke-width:2px
     style G fill:#bbf,stroke:#333,stroke-width:2px
-`
+```
 
 ---
 

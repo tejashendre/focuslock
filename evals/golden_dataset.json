@@ -1,0 +1,31 @@
+[
+  {
+    "id": "eval_01_character_limit",
+    "input": "Generate a concise Google Ads headline for spend risk monitoring.",
+    "mock_output": "SpendSignal: CFO Spend Risk",
+    "assertions": {
+      "max_length": 30,
+      "contains": ["SpendSignal"],
+      "forbidden": ["\u2014", "&mdash;"]
+    }
+  },
+  {
+    "id": "eval_02_policy_compliance",
+    "input": "Generate an ad description for enterprise procurement automation.",
+    "mock_output": "Automate 3-way invoice matching with zero open ports. Secure OCI and Cloudflare platform.",
+    "assertions": {
+      "max_length": 90,
+      "contains": ["invoice matching"],
+      "forbidden": ["100% guarantee", "click here", "\u2014"]
+    }
+  },
+  {
+    "id": "eval_03_code_minimalism",
+    "input": "Verify stdlib path extraction without adding third-party packages.",
+    "mock_output": "from pathlib import Path\ndef get_files(d): return list(Path(d).glob('*.md'))",
+    "assertions": {
+      "contains": ["pathlib"],
+      "forbidden": ["os.system", "shutil", "\u2014"]
+    }
+  }
+]

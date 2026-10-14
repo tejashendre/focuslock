@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+
+# Environment & Secrets
+.env
+.env.*
+*.key
+*.pem
+*.sqlite3
+
+# Build & Cache Artifacts
+dist/
+build/
+.next/
+out/
+target/
+*.log
+.system_generated/
+.gemini/
+.claude/
+.git/

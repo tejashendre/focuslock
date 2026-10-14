@@ -1,7 +1,7 @@
 'use strict';
 
 /* =====================================================================
- * FocusLock — Autonomous 25/5 Focus Sandbox  ·  MV3 service worker
+ * FocusLock - Autonomous 25/5 Focus Sandbox  ·  MV3 service worker
  * ---------------------------------------------------------------------
  *          +--------------------- auto-loop --------------------+
  *          v                                                    |
@@ -11,7 +11,7 @@
  *           HOLD +                                HOLD +
  *
  * FOCUS/BREAK loop forever until TASK FINISHED. HOLD parks the whole
- * thing indefinitely — nothing ticks, nothing locks — until RESUME.
+ * thing indefinitely - nothing ticks, nothing locks - until RESUME.
  *
  * HARD RULE: this service worker is killed by Chrome after ~30s idle.
  * Therefore NOTHING lives in module-scope variables. Every listener
@@ -19,7 +19,7 @@
  * ===================================================================== */
 
 /* ---------- Tunables (the only knobs you should ever touch) ---------- */
-const FOCUS_MINUTES = 25;   // classic Pomodoro sprint — do not stretch it
+const FOCUS_MINUTES = 25;   // classic Pomodoro sprint - do not stretch it
 const BREAK_MINUTES = 5;    // classic short break
 const TICK_MINUTES  = 0.5;  // badge repaint + fullscreen re-assert cadence
                             // (0.5 is Chrome's minimum alarm period)
@@ -65,7 +65,7 @@ const DEFAULT_PREFS = { overlaySide: 'right' };
 const DEFAULT_LOG   = { sessionLog: [] };
 
 /* Pages Chrome forbids extensions from touching. Locking onto one of these
- * would fullscreen you with no timer card and no DONE button — a trap with
+ * would fullscreen you with no timer card and no DONE button - a trap with
  * only Alt+F4 as the way out. Refuse the lock instead of warning about it. */
 const UNLOCKABLE = /^(chrome|edge|about|devtools|chrome-extension|chrome-search|chrome-untrusted|view-source):|^https?:\/\/(chromewebstore\.google\.com|chrome\.google\.com\/webstore)/i;
 
@@ -99,7 +99,10 @@ async function lockWindow(windowId) {
 /** Give the window back to the user (break / hold / session end). */
 async function releaseWindow(windowId) {
   if (windowId == null) return;
-  await safe(() => chrome.windows.update(windowId, { state: EXIT_WINDOW_STATE }));
+  const res = await safe(() => chrome.windows.update(windowId, { state: EXIT_WINDOW_STATE }));
+  if (!res && EXIT_WINDOW_STATE !== 'normal') {
+    await safe(() => chrome.windows.update(windowId, { state: 'normal' }));
+  }
 }
 
 /**
@@ -294,7 +297,7 @@ async function enterBreak() {
   notify(
     'Sprint ' + next.sprintCount + ' complete',
     BREAK_MINUTES + '-minute break. Tabs are free. Done with ' + label +
-    '? Hit TASK FINISHED — or HOLD if you are stepping away.'
+    '? Hit TASK FINISHED - or HOLD if you are stepping away.'
   );
 }
 
@@ -316,7 +319,7 @@ async function enterHold(reason) {
   };
   await patchState(next);
 
-  // Clear every alarm, tick included — a held session must not wake the
+  // Clear every alarm, tick included - a held session must not wake the
   // worker every 30s for hours. The badge text persists on its own.
   await chrome.alarms.clearAll();
 
@@ -339,20 +342,27 @@ async function resumeFromHold() {
 /** Terminal state: log it, clear everything, give the browser back. */
 async function endSession(outcome, message) {
   const s = await getState();
+  if (s.phase === IDLE) return; // Prevent double-execution if clicked multiple times
   const focusMs = bankFocus(s);
   const hadSession = !!s.sessionStartedAt;
+  const targetWindowId = s.lockedWindowId;
 
   await chrome.alarms.clearAll();
   await hideOverlay(s);
   await patchState(Object.assign({}, DEFAULT_STATE));
   await safe(() => chrome.action.setBadgeText({ text: '' }));
-  await releaseWindow(s.lockedWindowId);
+  await releaseWindow(targetWindowId);
+
+  // Automatically reopen the side panel when the session ends
+  if (targetWindowId && chrome.sidePanel && chrome.sidePanel.open) {
+    await safe(() => chrome.sidePanel.open({ windowId: targetWindowId }));
+  }
 
   if (hadSession) await appendLog(s, focusMs, outcome);
-  if (message) notify('FocusLock', message);
+  if (message) await safe(() => notify('FocusLock', message));
 }
 
-/** Break alarm fired: re-lock — unless you clearly walked away. */
+/** Break alarm fired: re-lock - unless you clearly walked away. */
 async function onBreakEnded() {
   const away = chrome.idle
     ? await safe(() => chrome.idle.queryState(AWAY_SECONDS))
@@ -369,7 +379,7 @@ async function onBreakEnded() {
   const s = await getState();
   await enterFocus(FOCUS_MS);
   notify(
-    'Break over — locking in',
+    'Break over - locking in',
     'Sprint ' + (s.sprintCount + 1) + ': fullscreen focus re-engaged for ' +
     FOCUS_MINUTES + ' minutes.'
   );
@@ -392,7 +402,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 
   if (alarm.name === ALARM_TICK) {
-    // Session ended or was held while the worker slept — stop ticking.
+    // Session ended or was held while the worker slept - stop ticking.
     if (s.phase === IDLE || s.phase === HOLD) {
       await chrome.alarms.clear(ALARM_TICK);
       await paintBadge(s);
@@ -406,7 +416,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-/* Guardrail 1 — tab switching inside the locked window snaps straight back. */
+/* Guardrail 1 - tab switching inside the locked window snaps straight back. */
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   const s = await getState();
   if (s.phase !== FOCUS || s.lockedTabId == null) return;
@@ -415,7 +425,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
   await safe(() => chrome.tabs.update(s.lockedTabId, { active: true }));
 });
 
-/* Guardrail 2 — any tab spawned during FOCUS dies on arrival. */
+/* Guardrail 2 - any tab spawned during FOCUS dies on arrival. */
 chrome.tabs.onCreated.addListener(async (tab) => {
   const s = await getState();
   if (s.phase !== FOCUS) return;
@@ -425,7 +435,7 @@ chrome.tabs.onCreated.addListener(async (tab) => {
   await lockWindow(s.lockedWindowId);
 });
 
-/* The locked tab navigated — the overlay died with the old document. */
+/* The locked tab navigated - the overlay died with the old document. */
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
   if (changeInfo.status !== 'complete') return;
   const s = await getState();
@@ -433,12 +443,12 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
   await showOverlay(s);
 });
 
-/* Edge case — the locked tab itself gets closed mid-session. */
+/* Edge case - the locked tab itself gets closed mid-session. */
 chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
   const s = await getState();
   if (s.phase === IDLE || tabId !== s.lockedTabId) return;
 
-  // The whole window is going away — windows.onRemoved owns that teardown.
+  // The whole window is going away - windows.onRemoved owns that teardown.
   // Without this guard, closing the window briefly "re-locks" onto a sibling
   // tab and fires a pointless notification on the way out.
   if (removeInfo && removeInfo.isWindowClosing) return;
@@ -461,7 +471,7 @@ chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
   }
 });
 
-/* Edge case — the whole locked window is closed. */
+/* Edge case - the whole locked window is closed. */
 chrome.windows.onRemoved.addListener(async (windowId) => {
   const s = await getState();
   if (s.phase !== IDLE && windowId === s.lockedWindowId) {
@@ -469,7 +479,7 @@ chrome.windows.onRemoved.addListener(async (windowId) => {
   }
 });
 
-/* Guardrail 3 — hopping to a DIFFERENT Chrome window pulls you back. */
+/* Guardrail 3 - hopping to a DIFFERENT Chrome window pulls you back. */
 chrome.windows.onFocusChanged.addListener(async (windowId) => {
   if (windowId === chrome.windows.WINDOW_ID_NONE) return; // Chrome lost OS focus; leave it alone
   const s = await getState();
@@ -478,7 +488,7 @@ chrome.windows.onFocusChanged.addListener(async (windowId) => {
   await lockWindow(s.lockedWindowId);
 });
 
-/* Guardrail 4 — instant re-fullscreen if the window is un-fullscreened.
+/* Guardrail 4 - instant re-fullscreen if the window is un-fullscreened.
    onBoundsChanged is Chrome 86+; guarded so older builds still load. */
 if (chrome.windows.onBoundsChanged) {
   chrome.windows.onBoundsChanged.addListener(async (win) => {
@@ -494,7 +504,7 @@ if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 }
 
-/* Tab and window IDs do not survive a browser restart — fail open, not shut.
+/* Tab and window IDs do not survive a browser restart - fail open, not shut.
    The dead session is still logged, so the record stays honest. */
 chrome.runtime.onStartup.addListener(async () => {
   const s = await getState();
@@ -537,6 +547,11 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           return;
 
         case 'START': {
+          const s = await getState();
+          if (s.phase !== IDLE) {
+            sendResponse({ ok: false, error: 'A session is already running.' });
+            return;
+          }
           let tabId = msg.tabId;
           let windowId = msg.windowId;
 
@@ -556,7 +571,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           if (UNLOCKABLE.test(url)) {
             sendResponse({
               ok: false,
-              error: 'Cannot lock onto a Chrome system page — the timer card and ' +
+              error: 'Cannot lock onto a Chrome system page - the timer card and ' +
                      'DONE button cannot be shown there. Switch to the tab with your ' +
                      'actual work and try again.'
             });
@@ -581,7 +596,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         }
 
         case 'HOLD':
-          await enterHold('Session parked. Your tab is still claimed — hit RESUME when you are ready.');
+          await enterHold('Session parked. Your tab is still claimed - hit RESUME when you are ready.');
           sendResponse({ ok: true });
           return;
 

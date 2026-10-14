@@ -5,7 +5,7 @@
   <title>FocusLock</title>
   <style>
     /* Deliberately flat + dark. This is a control panel, not somewhere
-       to linger — no animation, no colour noise, nothing to look at. */
+       to linger - no animation, no colour noise, nothing to look at. */
     :root {
       --bg:     #070b14;
       --panel:  #111a2b;
@@ -125,6 +125,7 @@
     .btn-hold:hover   { background: #2b3a55; }
     .btn-resume { background: var(--amber); }
     .btn-resume:hover { background: #b45309; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .cancel {
       width: 100%;

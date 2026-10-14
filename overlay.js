@@ -28,12 +28,15 @@
   /* ------------------------------- Build ------------------------------- */
 
   function build() {
-    host = document.getElementById(HOST_ID);
-    if (host) return;
+    let existing = document.getElementById(HOST_ID);
+    if (existing && document.body && document.body.contains(existing)) {
+      host = existing;
+      return;
+    }
 
     host = document.createElement('div');
     host.id = HOST_ID;
-    // `all: initial` first, then our own layout — later longhands win.
+    // `all: initial` first, then our own layout - later longhands win.
     host.style.cssText =
       'all: initial; position: fixed; top: 14px; right: 14px; z-index: 2147483647;';
 
@@ -110,8 +113,14 @@
       flip: root.getElementById('flip')
     };
 
-    ui.hold.addEventListener('click', () => send({ type: 'HOLD' }));
-    ui.done.addEventListener('click', () => send({ type: 'FINISH' }));
+    ui.hold.addEventListener('click', () => {
+      ui.hold.disabled = true;
+      send({ type: 'HOLD' });
+    });
+    ui.done.addEventListener('click', () => {
+      ui.done.disabled = true;
+      send({ type: 'FINISH' });
+    });
     ui.flip.addEventListener('click', () => {
       const side = state.side === 'right' ? 'left' : 'right';
       state.side = side;
@@ -193,7 +202,7 @@
     }
   });
 
-  // Ask for current state on injection — covers page navigations mid-sprint.
+  // Ask for current state on injection - covers page navigations mid-sprint.
   chrome.runtime.sendMessage({ type: 'GET_STATE' }, (s) => {
     if (chrome.runtime.lastError || !s || s.phase !== 'FOCUS') return;
     state = {

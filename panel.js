@@ -1,7 +1,7 @@
 'use strict';
 
 /* =====================================================================
- * FocusLock side panel — a thin controller.
+ * FocusLock side panel - a thin controller.
  * It owns NO state: it reads chrome.storage.local, sends intents to the
  * service worker, and re-renders. The countdown is derived from endTime,
  * so it stays correct even though the worker sleeps between alarms.
@@ -62,7 +62,7 @@ function mmss(ms) {
   return m + ':' + s;
 }
 
-/** "1h 40m" / "25m" / "40s" — readable at a glance, no false precision. */
+/** "1h 40m" / "25m" / "40s" - readable at a glance, no false precision. */
 function duration(ms) {
   const mins = Math.round(ms / 60000);
   if (mins < 1) return Math.max(0, Math.round(ms / 1000)) + 's';
@@ -98,7 +98,7 @@ function render(state) {
   const task = '<span class="task-name">' + esc(s.taskLabel || 'Unnamed task') + '</span>';
 
   if (s.phase === 'FOCUS') {
-    ui.phase.textContent = '\u{1F534} Locked in — focus';
+    ui.phase.textContent = '\u{1F534} Locked in - focus';
     ui.phase.className = 'phase focus';
     ui.timer.textContent = mmss(s.endTime - Date.now());
     ui.timer.className = 'timer';
@@ -107,7 +107,7 @@ function render(state) {
     show('running');
 
   } else if (s.phase === 'BREAK') {
-    ui.phase.textContent = '\u{1F7E2} Break — tabs unlocked';
+    ui.phase.textContent = '\u{1F7E2} Break - tabs unlocked';
     ui.phase.className = 'phase break';
     ui.timer.textContent = mmss(s.endTime - Date.now());
     ui.timer.className = 'timer';
@@ -154,7 +154,7 @@ function startTicker() {
 function renderLog(log) {
   const entries = log || [];
 
-  // Today's totals — the number that actually tells you how the day went.
+  // Today's totals - the number that actually tells you how the day went.
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
   const todays = entries.filter((e) => e.endedAt >= midnight.getTime());
@@ -218,11 +218,13 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
   if (changes.sessionLog) renderLog(changes.sessionLog.newValue);
 });
 
-/* 1. Lock in — start the first 25m sprint on the active tab. */
+/* 1. Lock in - start the first 25m sprint on the active tab. */
 ui.lock.addEventListener('click', async () => {
+  if (ui.lock.disabled) return;
+  ui.lock.disabled = true;
   const found = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
   const tab = found && found[0];
-  if (!tab) { ui.meta.textContent = 'Could not find an active tab.'; return; }
+  if (!tab) { ui.meta.textContent = 'Could not find an active tab.'; ui.lock.disabled = false; return; }
 
   const res = await chrome.runtime.sendMessage({
     type: 'START',
@@ -232,34 +234,51 @@ ui.lock.addEventListener('click', async () => {
   });
 
   if (res && res.ok) { ui.input.value = ''; await refresh(); }
-  else ui.meta.textContent = (res && res.error) || 'Failed to lock.';
+  else { ui.meta.textContent = (res && res.error) || 'Failed to lock.'; }
+  ui.lock.disabled = false;
 });
 
-/* 2. Hold / resume — park the session without losing it. */
+/* 2. Hold / resume - park the session without losing it. */
 ui.holdBtn.addEventListener('click', async () => {
+  if (ui.holdBtn.disabled) return;
+  ui.holdBtn.disabled = true;
   await chrome.runtime.sendMessage({ type: 'HOLD' });
   await refresh();
+  ui.holdBtn.disabled = false;
 });
 
 ui.resume.addEventListener('click', async () => {
+  if (ui.resume.disabled) return;
+  ui.resume.disabled = true;
   await chrome.runtime.sendMessage({ type: 'RESUME' });
   await refresh();
+  ui.resume.disabled = false;
 });
 
-/* 3. Task finished — the clean exit. Logged as FINISHED. */
+/* 3. Task finished - the clean exit. Logged as FINISHED. */
 async function finish() {
+  if (ui.done.disabled) return;
+  ui.done.disabled = true;
+  if (ui.done2) ui.done2.disabled = true;
   await chrome.runtime.sendMessage({ type: 'FINISH' });
   await refresh();
   await refreshLog();
+  ui.done.disabled = false;
+  if (ui.done2) ui.done2.disabled = false;
 }
 ui.done.addEventListener('click', finish);
 ui.done2.addEventListener('click', finish);
 
-/* 4. Cancel — same teardown, logged as CANCELLED. */
+/* 4. Cancel - same teardown, logged as CANCELLED. */
 async function cancel() {
+  if (ui.cancel.disabled) return;
+  ui.cancel.disabled = true;
+  if (ui.cancel2) ui.cancel2.disabled = true;
   await chrome.runtime.sendMessage({ type: 'CANCEL' });
   await refresh();
   await refreshLog();
+  ui.cancel.disabled = false;
+  if (ui.cancel2) ui.cancel2.disabled = false;
 }
 ui.cancel.addEventListener('click', cancel);
 ui.cancel2.addEventListener('click', cancel);
