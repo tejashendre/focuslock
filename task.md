@@ -12,6 +12,7 @@
 - [x] Slice 2: Update `README.md` with demo video embed, playback fallbacks, duration, and audio description modeled after `dictate-local`.
 - [x] Slice 3: Update `ARCHITECTURE.md`, `LEARNINGS.md`, and record slice checkpoints in `AUDIT_LOG.md`.
 - [x] Slice 4: Stage, verify git diff, commit, and push updates to `origin/main`.
+- [x] Slice 5: Fix README video not playing on GitHub. GitHub strips raw `<video>` tags; replaced with an inline-animating GIF (`media/focuslock-demo.gif`, 960px, 10fps, 4.3 MB) linking to the full mp4 with audio.
 
 ## Blockers & Open Items
-- None currently.
+- A bare GitHub `user-attachments` URL (as used by `dictate-local`) would give inline video with sound, but it can only be created through GitHub's web uploader under the owner's session.
